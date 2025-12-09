@@ -10,13 +10,6 @@ class Ball:
     # -------------------------------------------------------------------------
     # region SPRITES Y PROPIEDADES ESTÁTICAS
     # -------------------------------------------------------------------------
-    # Sprites por tamaño
-    sprite_by_size = {
-        "big": "assets/sprites/orb_red.png",
-        "medium": "assets/sprites/orb_blue.png",
-        "small": "assets/sprites/orb_purple.png"
-    }
-
     # Factores de rebote por tamaño
     bounce_factor_by_size = {
         "big": 0.9,
@@ -25,8 +18,8 @@ class Ball:
     }
 
     # Parámetros físicos globales
-    MIN_VY = 6                     # Velocidad mínima al rebotar
-    MIN_BOUNCE_HEIGHT = 200        # Altura mínima solo para rebotes en piso
+    MIN_VY = 6
+    MIN_BOUNCE_HEIGHT = 200
 
     # Sonido cargado bajo demanda
     _explode_sound = None
@@ -59,12 +52,25 @@ class Ball:
     # -------------------------------------------------------------------------
     # region INIT (Constructor)
     # -------------------------------------------------------------------------
-    def __init__(self, x, y, size, vx, vy):
+    def __init__(self, x, y, size, vx, vy, sprite_path=None, custom_sprites=None):
         """
         x, y: posición de la bola
         size: "big", "medium", "small"
         vx, vy: velocidad inicial
+        sprite_path: Ruta específica para este sprite (opcional)
+        custom_sprites: Diccionario personalizado de sprites por tamaño (opcional)
         """
+        # Sprites por defecto
+        default_sprites = {
+            "big": "assets/sprites/orb_red.png",
+            "medium": "assets/sprites/orb_blue.png",
+            "small": "assets/sprites/orb_purple.png"
+        }
+        
+        # Usar sprites personalizados si se proporcionan, sino usar los por defecto
+        self.sprite_by_size = custom_sprites if custom_sprites else default_sprites
+        
+        # Posición y velocidad
         self.x = x
         self.y = y
         self.size = size
@@ -85,14 +91,18 @@ class Ball:
         # Control de comportamiento de rebotes
         self.bounce_count = 0
         self.max_bounces_before_low = 3
-        self.just_bounced = 0  # evita rebotes consecutivos en un mismo frame
+        self.just_bounced = 0
 
         # ------------------------------------------------------
-        # Cargar sprite correspondiente al tamaño
+        # Cargar sprite
         # ------------------------------------------------------
         r = self.radius_by_size[self.size]
+        
+        # Determinar qué sprite usar
+        sprite_to_load = sprite_path if sprite_path else self.sprite_by_size[self.size]
+        
         try:
-            img = pygame.image.load(self.sprite_by_size[self.size]).convert_alpha()
+            img = pygame.image.load(sprite_to_load).convert_alpha()
             self.image = pygame.transform.scale(img, (2*r, 2*r))
         except:
             # Fallback visual si hay error
@@ -117,22 +127,19 @@ class Ball:
             True  -> aplicar altura mínima (solo piso)
             False -> rebote normal (plataformas y techo)
         """
-        # Rebote "fuerte" en piso después de varios rebotes
         if use_min_height and self.bounce_count > self.max_bounces_before_low:
             required_vy = -math.sqrt(2 * self.gravity * self.MIN_BOUNCE_HEIGHT)
             if self.vy > required_vy:
                 self.vy = required_vy
         else:
-            # Rebote normal
             self.vy = -abs(self.vy) * self.bounce_factor
 
-        # Velocidades límite
         if abs(self.vy) < self.MIN_VY:
             self.vy = -self.MIN_VY
         if abs(self.vy) > 18:
             self.vy = -18
 
-        self.just_bounced = 3  # anti-doble-rebote
+        self.just_bounced = 3
     # endregion
     # -------------------------------------------------------------------------
 
@@ -147,34 +154,28 @@ class Ball:
         """
         r = self.radius_by_size[self.size]
 
-        # Reducir cooldown anti-doble-bounce
         if self.just_bounced > 0:
             self.just_bounced -= 1
 
-        # Aplicar gravedad y actualizar posición
         self.vy += self.gravity
         self.x += self.vx
         self.y += self.vy
 
-        # ============================================================
-        #   TECHO
-        # ============================================================
-        ceiling_limit = ceiling_y + 16  # grosor de tile superior
+        # TECHO
+        ceiling_limit = ceiling_y + 16
 
         if self.y - r <= ceiling_limit:
             self.y = ceiling_limit + r
 
             if self.just_bounced == 0:
-                self.vy = abs(self.vy) * self.bounce_factor  # rebote hacia abajo
+                self.vy = abs(self.vy) * self.bounce_factor
                 if self.vy < self.MIN_VY:
                     self.vy = self.MIN_VY
                 self.just_bounced = 3
 
             return
 
-        # ============================================================
-        #   PISO
-        # ============================================================
+        # PISO
         if self.y + r >= floor_y and self.just_bounced == 0:
             self.y = floor_y - r
             self.bounce_count += 1
@@ -182,9 +183,7 @@ class Ball:
             self.y -= 1
             return
 
-        # ============================================================
-        #   PAREDES
-        # ============================================================
+        # PAREDES
         if self.x - r <= left_wall:
             self.x = left_wall + r
             self.vx = abs(self.vx) * self.bounce_factor
@@ -211,9 +210,10 @@ class Ball:
         new_size = "medium" if self.size == "big" else "small"
 
         # Genera dos bolas con velocidades opuestas
+        # IMPORTANTE: Propaga los sprites personalizados a las bolas hijas
         return [
-            Ball(self.x, self.y, new_size, 3, -8),
-            Ball(self.x, self.y, new_size, -3, -8)
+            Ball(self.x, self.y, new_size, 3, -8, custom_sprites=self.sprite_by_size),
+            Ball(self.x, self.y, new_size, -3, -8, custom_sprites=self.sprite_by_size)
         ]
     # endregion
     # -------------------------------------------------------------------------
@@ -230,4 +230,4 @@ class Ball:
     # -------------------------------------------------------------------------
 
 #endregion
-# =============================================================================
+# ============================================================================="
