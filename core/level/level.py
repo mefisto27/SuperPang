@@ -6,6 +6,8 @@ from core.physics.platforms import AdvancedPlatformSystem
 
 class BaseLevel:
 
+        
+
     # region INIT & ESTADO GENERAL
     def __init__(self, pantalla, ANCHO, ALTO):
         self.pantalla = pantalla
@@ -108,7 +110,6 @@ class BaseLevel:
         # WIN CONDITION
         if len(self.balls) == 0:
             self.level_won = True
-            print("WIN TRIGGERED!")
     # endregion
 
 

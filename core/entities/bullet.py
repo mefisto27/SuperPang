@@ -98,6 +98,10 @@ class Bullet:
         Crea una bala en (x, y), con los frames de animación especificados.
         Si no se pasan frames, utiliza los del spritesheet global.
         """
+        # Hitbox lógico (NO depende del sprite)
+        self.hitbox_width = 8
+        self.hitbox_height = 12
+
         self.x = x
         self.y = y
         
@@ -121,6 +125,21 @@ class Bullet:
     # endregion
     # -------------------------------------------------------------------------
 
+
+    def get_hitbox(self):
+        """
+        Retorna el rect de colisión REAL de la bala
+        (punta superior, sin padding transparente)
+        """
+        hitbox_x = self.x + (self.width // 2) - (self.hitbox_width // 2)
+        hitbox_y = self.y  # punta superior
+
+        return pygame.Rect(
+            hitbox_x,
+            hitbox_y,
+            self.hitbox_width,
+            self.hitbox_height
+        )
 
     # -------------------------------------------------------------------------
     # region UPDATE (Movimiento y animación)

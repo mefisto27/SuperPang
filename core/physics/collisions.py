@@ -32,7 +32,7 @@ class CollisionSystem:
     @staticmethod
     def check_bullet_platform(bullet, platform):
         """Detecta colisión bala-plataforma"""
-        bullet_rect = pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)
+        bullet_rect = bullet.get_hitbox()
         return bullet_rect.colliderect(platform.rect)
     #endregion
     # ============================================================

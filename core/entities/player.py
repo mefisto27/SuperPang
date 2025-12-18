@@ -118,7 +118,7 @@ class Player:
         self.death_animation_finished = False
 
         # Vidas
-        self.lives = 3
+        self.lives = 5
         self.invulnerable = False
         self.invulnerable_until = 0
         self.INVULNERABILITY_MS = 1500
@@ -276,7 +276,7 @@ class Player:
     # -------------------------------------------------------------------------
     def reset(self):
 
-        self.lives = 3
+        self.lives = 5
         self.invulnerable = False
         self.invulnerable_until = 0
         self.state = "idle"

@@ -1,10 +1,11 @@
 # =============================================================================
 # ui/menu.py
-# Sistema de menú principal con submenús (CORREGIDO)
+# Sistema de menú principal con submenús
 # =============================================================================
 
 import pygame
 from core.audio.audio_manager import AudioManager
+
 
 class Menu:
     def __init__(self, screen_width, screen_height):
@@ -16,18 +17,28 @@ class Menu:
 
         # Opciones
         self.main_options = ["Niveles", "Configuracion", "Salir"]
-        self.level_options = ["Level 1", "Level 2", "Level 3", "Volver"]
-        self.settings_options = ["Volumen Musica", "Volumen SFX", "Volver"]
 
+        self.level_options = [
+            "Level 1",
+            "Level 2",
+            "Level 3",
+            "Level 4",
+            "Level 5",
+            "Level Boss",
+            "Volver"
+        ]
+
+
+        self.settings_options = ["Volumen Musica", "Volumen SFX", "Volver"]
         self.selected_option = 0
 
         # Configuración
         self.music_volume = 0.7
         self.sfx_volume = 0.5
 
-        # Música menú
+        # Música del menú
         self.menu_music_playing = False
-        self.menu_music_loaded = False  # None → no volver a intentar si falla
+        self.menu_music_loaded = False
 
         # Colores
         self.bg_color = (20, 20, 40)
@@ -48,7 +59,7 @@ class Menu:
         try:
             self.font_title = pygame.font.Font(font_path, 72)
             self.font_subtitle = pygame.font.Font(font_path, 42)
-            self.font_option = pygame.font.Font(font_path, 36)
+            self.font_option = pygame.font.Font(font_path, 30)
             self.font_small = pygame.font.Font(font_path, 20)
         except:
             self.font_title = pygame.font.SysFont("Arial", 64, bold=True)
@@ -56,7 +67,7 @@ class Menu:
             self.font_option = pygame.font.SysFont("Arial", 32)
             self.font_small = pygame.font.SysFont("Arial", 18)
 
-        # Fondo opcional
+        # Fondo
         try:
             self.background = pygame.image.load("assets/sprites/menu_bg.png")
             self.background = pygame.transform.scale(self.background, (screen_width, screen_height))
@@ -64,26 +75,18 @@ class Menu:
             self.background = None
 
     # -------------------------------------------------------------------------
-    # MÚSICA DEL MENÚ (CORREGIDA)
+    # MÚSICA
     # -------------------------------------------------------------------------
     def start_menu_music(self):
-
-        # Intentar cargar música solo una vez
         if self.menu_music_loaded is False:
             try:
                 pygame.mixer.music.load("assets/sounds/OrbitalColossus.mp3")
                 self.menu_music_loaded = True
-            except Exception as e:
-                print(f"[MENU] Error cargando música: {e}")
-                self.menu_music_loaded = None  # No volver a intentar
+            except:
+                self.menu_music_loaded = None
                 return
 
-        # Si falló cargar música → no intentar reproducir
-        if self.menu_music_loaded is None:
-            return
-
-        # Reproducir solo si no está sonando
-        if not self.menu_music_playing:
+        if self.menu_music_loaded and not self.menu_music_playing:
             pygame.mixer.music.set_volume(self.music_volume)
             pygame.mixer.music.play(-1)
             self.menu_music_playing = True
@@ -129,7 +132,7 @@ class Menu:
         return None
 
     # -------------------------------------------------------------------------
-    # MANEJO DE OPCIONES
+    # MANEJO DE MENÚS
     # -------------------------------------------------------------------------
     def _get_current_options(self):
         if self.menu_state == "main":
@@ -170,10 +173,17 @@ class Menu:
         if self.selected_option == 2:
             return "level_3"
         if self.selected_option == 3:
+            return "level_4"
+        if self.selected_option == 4:
+            return "level_5"
+        if self.selected_option == 5:
+            return "boss_level"
+        if self.selected_option == 6:
             self.menu_state = "main"
             self.selected_option = 0
             self._play_menu_sound()
         return None
+
 
     def _handle_settings_menu(self):
         if self.selected_option == 2:
@@ -189,16 +199,15 @@ class Menu:
         if self.selected_option == 0:
             self.music_volume = max(0.0, min(1.0, self.music_volume + direction * 0.1))
             AudioManager.set_music_volume(self.music_volume)
-            pygame.mixer.music.set_volume(AudioManager.music_volume)
+            pygame.mixer.music.set_volume(self.music_volume)
             self._play_menu_sound()
 
         elif self.selected_option == 1:
             self.sfx_volume = max(0.0, min(1.0, self.sfx_volume + direction * 0.1))
             AudioManager.set_sfx_volume(self.sfx_volume)
 
-
     # -------------------------------------------------------------------------
-    # SFX
+    # SONIDO
     # -------------------------------------------------------------------------
     def _play_menu_sound(self):
         try:
@@ -229,11 +238,7 @@ class Menu:
     def _draw_main_menu(self, screen):
         title = self.font_title.render("SUPER PANG", True, self.title_color)
         screen.blit(title, (self.width // 2 - title.get_width() // 2, 80))
-
-        self._draw_options(screen, self.main_options, 280)
-
-        instructions = self.font_small.render("UP  DOWN para navegar     ENTER para seleccionar", True, (150, 150, 150))
-        screen.blit(instructions, (self.width // 2 - instructions.get_width() // 2, self.height - 60))
+        self._draw_options(screen, self.main_options, 200)
 
     def _draw_level_menu(self, screen):
         title = self.font_title.render("SUPER PANG", True, self.title_color)
@@ -256,43 +261,34 @@ class Menu:
 
         for i, option in enumerate(self.settings_options):
             color = self.selected_color if i == self.selected_option else self.normal_color
-
             text = option
             if i < 2:
-                text = f"{option}  {self._get_setting_value(i)}"
+                text = f"{option} {int((self.music_volume if i == 0 else self.sfx_volume) * 100)}"
 
-            text_surf = self.font_option.render(text, True, color)
-            text_x = self.width // 2 - text_surf.get_width() // 2
-            text_y = start_y + i * spacing
+            surf = self.font_option.render(text, True, color)
+            x = self.width // 2 - surf.get_width() // 2
+            y = start_y + i * spacing
 
             if i == self.selected_option:
                 if self.cursor_img:
-                    screen.blit(self.cursor_img, (text_x - 40, text_y - 5))
+                    screen.blit(self.cursor_img, (x - 40, y - 5))
                 else:
-                    screen.blit(self.font_option.render(">", True, self.selected_color), (text_x - 50, text_y))
+                    screen.blit(self.font_option.render(">", True, self.selected_color), (x - 50, y))
 
-            screen.blit(text_surf, (text_x, text_y))
+            screen.blit(surf, (x, y))
 
     def _draw_options(self, screen, options, start_y):
-        spacing = 70
+        spacing = 50
         for i, option in enumerate(options):
             color = self.selected_color if i == self.selected_option else self.normal_color
-
             surf = self.font_option.render(option, True, color)
-            text_x = self.width // 2 - surf.get_width() // 2
-            text_y = start_y + i * spacing
+            x = self.width // 2 - surf.get_width() // 2
+            y = start_y + i * spacing
 
             if i == self.selected_option:
                 if self.cursor_img:
-                    screen.blit(self.cursor_img, (text_x - 40, text_y - 5))
+                    screen.blit(self.cursor_img, (x - 40, y - 5))
                 else:
-                    screen.blit(self.font_option.render(">", True, self.selected_color), (text_x - 50, text_y))
+                    screen.blit(self.font_option.render(">", True, self.selected_color), (x - 50, y))
 
-            screen.blit(surf, (text_x, text_y))
-
-    def _get_setting_value(self, index):
-        if index == 0:
-            return f"{int(self.music_volume * 100)}"
-        if index == 1:
-            return f"{int(self.sfx_volume * 100)}"
-        return ""
+            screen.blit(surf, (x, y))

@@ -30,7 +30,7 @@ class HUD:
         self.y_start = hud_y_start
 
         # Datos del juego
-        self.lives = 3
+        self.lives = 5
         self.score = 0
         self.time = 99
         self.game_over = False
